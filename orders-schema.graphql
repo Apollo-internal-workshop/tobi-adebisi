@@ -1,17 +1,35 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", import: 
+  @link(url: "https://specs.apollo.dev/federation/v2.10", import: 
     [
       "@key",
       "@tag",
       "@authenticated"
     ]
   )
+  @link(
+    url: "https://specs.apollo.dev/connect/v0.1"
+    import: ["@connect", "@source"]
+  )
+
+  @source(
+    name: "api"
+    http: { baseURL: "https://rest-api-j3nprurqka-uc.a.run.app/api" }
+  )
 
 type Query {
-  """
-  Get a specific order by id. Meant to be used for a detailed view of an order
-  """
-  order(id: ID!): Order @authenticated
+  order(id: ID!): Order
+    @authenticated
+    @connect(
+      source: "api"
+      http: { GET: "/orders/{$args.id}" }
+      selection: """
+        id
+        buyer: { id: $.customerId }
+        items: $.variantIds { id: $ }
+      """
+      entity: true
+      """
+    )
 }
 
 """
